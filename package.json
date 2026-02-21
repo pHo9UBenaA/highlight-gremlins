@@ -162,11 +162,10 @@
     "watch": "tsc -watch -p ./",
     "test": "vitest run",
     "test:watch": "vitest",
-    "package": "vsce package --allow-missing-repository"
+    "package": "npx @vscode/vsce package --allow-missing-repository"
   },
   "devDependencies": {
     "@types/vscode": "^1.109.0",
-    "@vscode/vsce": "^3.7.1",
     "fast-check": "^4.5.3",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18"
