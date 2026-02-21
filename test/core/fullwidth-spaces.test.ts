@@ -5,12 +5,17 @@ import {
   replaceFullwidthSpaces,
 } from "../../src/core/fullwidth-spaces";
 
-const stringWithFullwidth = fc.stringOf(
-  fc.oneof(
-    fc.char(),
-    fc.constant("\u3000"),
-    fc.constant("\n"),
-  ),
+const singleChar = fc.string({ minLength: 1, maxLength: 1 });
+
+const stringWithFullwidth = fc.oneof(
+  fc.string(),
+  fc.array(
+    fc.oneof(
+      singleChar,
+      fc.constant("\u3000"),
+      fc.constant("\n"),
+    ),
+  ).map((arr) => arr.join("")),
 );
 
 describe("detectFullwidthSpaces", () => {

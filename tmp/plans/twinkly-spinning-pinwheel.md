@@ -1,61 +1,57 @@
-# highlight-unwanted-spaces: VSCode Extension Implementation Plan
+# @vscode/vsce を devDependencies に追加 & launch.json 修正
 
 ## Context
 
-全角スペース、trailing spaces、gremlins（問題のあるUnicode文字）を検出・強調表示・削除するVSCode拡張機能を新規作成する。3つの既存拡張（zenkaku, trailing-spaces, gremlins）の機能を1つの拡張に統合する。
+DEVELOPMENT.md で `npx @vscode/vsce` を使用しているが、`@vscode/vsce` を devDependencies に追加して npm script 経由で使えるようにする。また launch.json の diagnostics 警告を修正する。
 
-## Architecture
+## 変更内容
 
-**pure-core / imperative-shell** パターンを採用:
-- `src/core/` — VSCode非依存の純粋関数（検出・置換ロジック）
-- `src/adapters/` — VSCode APIとの接続層
-- `src/extension.ts` — composition root
+### 1. package.json — `@vscode/vsce` を devDependencies に追加 & package script 追加
 
-```
-src/
-  extension.ts
-  core/
-    types.ts
-    fullwidth-spaces.ts
-    trailing-spaces.ts
-    gremlins.ts
-  adapters/
-    config-reader.ts
-    decoration-manager.ts
-    command-handler.ts
-    document-listener.ts
-test/
-  smoke.test.ts
-  core/
-    fullwidth-spaces.test.ts
-    trailing-spaces.test.ts
-    gremlins.test.ts
+ファイル: `package.json`
+
+- `devDependencies` に `"@vscode/vsce": "latest"` を追加（`npm install --save-dev @vscode/vsce@latest`）
+- `scripts` に `"package": "vsce package --allow-missing-repository"` を追加
+
+### 2. DEVELOPMENT.md — npx → npm run package に変更
+
+ファイル: `DEVELOPMENT.md`
+
+```diff
+-npx @vscode/vsce package --allow-missing-repository
++npm run package
 ```
 
-## Phases
+### 3. .vscode/launch.json — diagnostics 修正
 
-各フェーズはgeneral-purposeサブエージェントで実施する。TDD（RED→GREEN vertical slices）に従う。
+ファイル: `.vscode/launch.json`
 
-| Phase | File | 内容 |
-|-------|------|------|
-| 1 | [phase1_project_scaffolding.md](./highlight_unwanted_spaces/phase1_project_scaffolding.md) | プロジェクト基盤、型定義、ビルド・テスト環境 |
-| 2 | [phase2_fullwidth_space_core.md](./highlight_unwanted_spaces/phase2_fullwidth_space_core.md) | 全角スペース検出・置換 (pure core + PBT) |
-| 3 | [phase3_trailing_spaces_core.md](./highlight_unwanted_spaces/phase3_trailing_spaces_core.md) | Trailing spaces検出・削除 (pure core + PBT) |
-| 4 | [phase4_gremlins_core.md](./highlight_unwanted_spaces/phase4_gremlins_core.md) | Gremlins検出・削除 (pure core + PBT) |
-| 5 | [phase5_vscode_adapters.md](./highlight_unwanted_spaces/phase5_vscode_adapters.md) | VSCode adapter層 (decoration, commands, listener, config) |
-| 6 | [phase6_integration_polish.md](./highlight_unwanted_spaces/phase6_integration_polish.md) | スタイリング、設定トグル、E2E手動検証 |
+現在の `"type": "extensionHost"` が認識されない警告が出ている。正しいVSCode拡張デバッグ設定に修正:
 
-## Commands (3つ)
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/out/**/*.js"
+      ],
+      "preLaunchTask": "${defaultBuildTask}"
+    }
+  ]
+}
+```
 
-1. `highlight-unwanted-spaces.convertFullwidthSpaces` — 全角スペース→半角スペース変換
-2. `highlight-unwanted-spaces.removeTrailingSpaces` — Trailing spaces削除
-3. `highlight-unwanted-spaces.removeGremlins` — Gremlins文字削除
-
-## Tech Stack
-
-- TypeScript, vitest, fast-check (PBT)
-- VSCode Extension API (decorations, commands, configuration)
+注: `"type": "extensionHost"` はVSCode本体のbuilt-in debuggerが提供する型で、拡張がインストールされていなくても動作するはず。diagnostics警告はVSCode側の一時的な問題の可能性が高いため、設定自体はそのまま維持する。
 
 ## Verification
 
-各フェーズ終了時に `npm test` で全テストパスを確認。Phase 6でE2E手動検証チェックリストを実施。
+- `npm install` が成功すること
+- `npm run package` で .vsix が生成されること
+- `npm test` — 全92テストがパスすること

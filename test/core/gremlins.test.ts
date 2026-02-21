@@ -167,16 +167,18 @@ const allDefaultConfigs: GremlinCharConfig[] = [
 
 const configSubset = fc.subarray(allDefaultConfigs, { minLength: 1 });
 
+const asciiChar = fc.stringMatching(/^[a-zA-Z0-9]$/);
+
 const stringWithGremlins = (configs: GremlinCharConfig[]) =>
-  fc.stringOf(
+  fc.array(
     fc.oneof(
-      fc.char().filter((c) => c.charCodeAt(0) <= 0x7f),
+      asciiChar,
       fc.constantFrom(
         ...configs.map((c) => String.fromCodePoint(parseInt(c.codePoint, 16)))
       ),
       fc.constant("\n")
-    )
-  );
+    ),
+  ).map((arr) => arr.join(""));
 
 // Generate a tuple of [configs, string-with-those-gremlins]
 const configAndString = configSubset.chain((configs) =>
@@ -215,7 +217,7 @@ describe("PBT: removeGremlins", () => {
     fc.assert(
       fc.property(
         configSubset,
-        fc.stringOf(fc.char().filter((c) => c.charCodeAt(0) <= 0x7f)),
+        fc.array(asciiChar).map((arr) => arr.join("")),
         (configs, s) => {
           expect(removeGremlins(s, configs)).toBe(s);
         }

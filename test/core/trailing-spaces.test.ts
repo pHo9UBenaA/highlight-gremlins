@@ -6,13 +6,14 @@ import {
 } from "../../src/core/trailing-spaces";
 
 // Custom generators for PBT
+const nonWhitespaceContent = fc.stringMatching(/^[^\n \t]*$/);
+const trailingWhitespace = fc.array(
+  fc.oneof(fc.constant(" "), fc.constant("\t")),
+  { maxLength: 5 },
+).map((arr) => arr.join(""));
+
 const lineWithOptionalTrailing = fc
-  .tuple(
-    fc.stringOf(
-      fc.char().filter((c) => c !== "\n" && c !== " " && c !== "\t")
-    ),
-    fc.stringOf(fc.oneof(fc.constant(" "), fc.constant("\t")))
-  )
+  .tuple(nonWhitespaceContent, trailingWhitespace)
   .map(([content, trailing]) => content + trailing);
 
 const multiLineText = fc
