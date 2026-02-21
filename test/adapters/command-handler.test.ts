@@ -74,11 +74,11 @@ describe("registerCommands", () => {
     mockActiveTextEditor.value = undefined;
   });
 
-  it("registers three commands", () => {
+  it("registers four commands", () => {
     const disposables = registerCommands();
 
-    expect(mockRegisterCommand).toHaveBeenCalledTimes(3);
-    expect(disposables).toHaveLength(3);
+    expect(mockRegisterCommand).toHaveBeenCalledTimes(4);
+    expect(disposables).toHaveLength(4);
   });
 
   it("registers convertFullwidthSpaces command", () => {
@@ -106,6 +106,58 @@ describe("registerCommands", () => {
     expect(commandNames).toContain(
       "highlight-unwanted-spaces.removeGremlins"
     );
+  });
+
+  it("registers fixAll command", () => {
+    registerCommands();
+
+    const commandNames = mockRegisterCommand.mock.calls.map((c: any) => c[0]);
+    expect(commandNames).toContain(
+      "highlight-unwanted-spaces.fixAll"
+    );
+  });
+});
+
+describe("fixAll command", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockActiveTextEditor.value = undefined;
+  });
+
+  it("fixes all issues in one pass: fullwidth spaces, trailing spaces, and gremlins", async () => {
+    const editor = createMockEditor("hello\u3000world  \nfoo\u2013bar  ");
+    mockActiveTextEditor.value = editor;
+
+    const mockConfig = createMockConfig({
+      "gremlins.characters": {
+        "2013": { description: "en dash", level: "warning" },
+      },
+    });
+    mockGetConfiguration.mockReturnValue(mockConfig);
+
+    registerCommands();
+
+    const fixAllCmd = mockRegisterCommand.mock.calls.find(
+      (c: any) => c[0] === "highlight-unwanted-spaces.fixAll"
+    );
+    await fixAllCmd![1]();
+
+    expect(editor.edit).toHaveBeenCalled();
+    expect(editor._editBuilder.replace).toHaveBeenCalledWith(
+      expect.any(MockRange),
+      "hello world\nfoobar"
+    );
+  });
+
+  it("does nothing when there is no active editor", async () => {
+    mockActiveTextEditor.value = undefined;
+
+    registerCommands();
+
+    const fixAllCmd = mockRegisterCommand.mock.calls.find(
+      (c: any) => c[0] === "highlight-unwanted-spaces.fixAll"
+    );
+    await fixAllCmd![1]();
   });
 });
 

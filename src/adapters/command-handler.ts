@@ -55,5 +55,23 @@ export function registerCommands(): vscode.Disposable[] {
     }
   );
 
-  return [convertFullwidth, removeTrailing, removeGremlinCmd];
+  const fixAll = vscode.commands.registerCommand(
+    "highlight-unwanted-spaces.fixAll",
+    async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        return;
+      }
+      const config = getGremlinConfig();
+      let text = editor.document.getText();
+      text = replaceFullwidthSpaces(text);
+      text = removeTrailingSpaces(text);
+      text = removeGremlins(text, config);
+      await editor.edit((editBuilder) => {
+        editBuilder.replace(getFullDocumentRange(editor.document), text);
+      });
+    }
+  );
+
+  return [convertFullwidth, removeTrailing, removeGremlinCmd, fixAll];
 }

@@ -30,7 +30,7 @@ npm run test:watch     # run tests in watch mode
 
 ```sh
 npm run package
-code --install-extension highlight-unwanted-spaces-0.0.2.vsix --force
+code --install-extension highlight-unwanted-spaces-0.0.4.vsix --force
 ```
 
 ## Project Structure
