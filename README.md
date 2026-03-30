@@ -1,4 +1,4 @@
-# Highlight Unwanted Spaces
+# Highlight Gremlins
 
 Full-width spaces, trailing spaces, and gremlin characters to highlight and remove in VSCode.
 
@@ -34,6 +34,8 @@ Default gremlin characters include zero-width spaces, directional formatting cha
 | `highlight-unwanted-spaces.trailingSpaces.enabled` | `true` | Enable trailing space highlighting |
 | `highlight-unwanted-spaces.gremlins.enabled` | `true` | Enable gremlin character highlighting |
 | `highlight-unwanted-spaces.gremlins.characters` | *(see below)* | Configurable list of gremlin characters to detect |
+
+Default gremlin definitions are maintained in `src/config/default-gremlins.json`. Run `npm run sync:gremlin-defaults` after editing that file to synchronize the VSCode manifest in `package.json`.
 
 ### Default Gremlin Characters
 

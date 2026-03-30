@@ -1,5 +1,12 @@
 import * as vscode from "vscode";
 import { GremlinCharConfig } from "../core/types";
+import {
+  DEFAULT_GREMLIN_CHARACTERS,
+  GremlinCharacterSettingsOverride,
+  mergeGremlinCharacterSettings,
+  GremlinCharacterSettings,
+  toGremlinConfig,
+} from "../config/gremlin-defaults";
 
 export type FeatureName = "fullwidthSpaces" | "trailingSpaces" | "gremlins";
 
@@ -10,23 +17,14 @@ export function isFeatureEnabled(feature: FeatureName): boolean {
 
 export function getGremlinConfig(): GremlinCharConfig[] {
   const config = vscode.workspace.getConfiguration("highlight-unwanted-spaces");
-  const characters = config.get<
-    Record<
-      string,
-      {
-        description: string;
-        level: string;
-        zeroWidth?: boolean;
-        replacement?: string;
-      }
-    >
-  >("gremlins.characters", {});
+  const overrides = config.get<GremlinCharacterSettingsOverride>(
+    "gremlins.characters",
+    {}
+  );
+  const characters: GremlinCharacterSettings = mergeGremlinCharacterSettings(
+    DEFAULT_GREMLIN_CHARACTERS,
+    overrides
+  );
 
-  return Object.entries(characters).map(([codePoint, value]) => ({
-    codePoint,
-    description: value.description,
-    level: value.level as "error" | "warning" | "info",
-    zeroWidth: value.zeroWidth,
-    replacement: value.replacement,
-  }));
+  return toGremlinConfig(characters);
 }

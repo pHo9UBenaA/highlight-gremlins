@@ -1,8 +1,8 @@
 {
   "name": "highlight-unwanted-spaces",
-  "displayName": "Highlight Unwanted Spaces",
+  "displayName": "Highlight Gremlins",
   "description": "Highlight and remove full-width spaces, trailing spaces, and gremlin characters",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "publisher": "ryohei-hashimoto",
   "repository": {
     "type": "git",
@@ -31,24 +31,24 @@
     "commands": [
       {
         "command": "highlight-unwanted-spaces.convertFullwidthSpaces",
-        "title": "Highlight Unwanted Spaces: Convert Full-width Spaces to Half-width"
+        "title": "Highlight Gremlins: Convert Full-width Spaces to Half-width"
       },
       {
         "command": "highlight-unwanted-spaces.removeTrailingSpaces",
-        "title": "Highlight Unwanted Spaces: Remove Trailing Spaces"
+        "title": "Highlight Gremlins: Remove Trailing Spaces"
       },
       {
         "command": "highlight-unwanted-spaces.removeGremlins",
-        "title": "Highlight Unwanted Spaces: Clean Up Gremlins"
+        "title": "Highlight Gremlins: Clean Up Gremlins"
       },
       {
         "command": "highlight-unwanted-spaces.fixAll",
-        "title": "Highlight Unwanted Spaces: Fix All"
+        "title": "Highlight Gremlins: Fix All"
       }
     ],
     "configuration": {
       "type": "object",
-      "title": "Highlight Unwanted Spaces",
+      "title": "Highlight Gremlins",
       "properties": {
         "highlight-unwanted-spaces.fullwidthSpaces.enabled": {
           "type": "boolean",
@@ -175,6 +175,8 @@
     "watch": "tsc -watch -p ./",
     "test": "vitest run",
     "test:watch": "vitest",
+    "sync:gremlin-defaults": "node ./scripts/sync-gremlin-defaults.mjs",
+    "prepackage": "node ./scripts/sync-gremlin-defaults.mjs",
     "package": "npx @vscode/vsce package --allow-missing-repository"
   },
   "devDependencies": {
