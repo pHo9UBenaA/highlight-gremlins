@@ -43,7 +43,7 @@ describe("getGremlinConfig", () => {
   it("converts a single character config entry to GremlinCharConfig", () => {
     const mockConfig = createMockConfig({
       "gremlins.characters": {
-        "2013": { description: "en dash", level: "warning" },
+        "2013": { description: "en dash", level: "warning", replacement: "-" },
       },
     });
     mockGetConfiguration.mockReturnValue(mockConfig);
@@ -51,16 +51,22 @@ describe("getGremlinConfig", () => {
     const result = getGremlinConfig();
 
     expect(result).toEqual([
-      { codePoint: "2013", description: "en dash", level: "warning", zeroWidth: undefined },
+      {
+        codePoint: "2013",
+        description: "en dash",
+        level: "warning",
+        zeroWidth: undefined,
+        replacement: "-",
+      },
     ]);
   });
 
   it("converts multiple character config entries", () => {
     const mockConfig = createMockConfig({
       "gremlins.characters": {
-        "2013": { description: "en dash", level: "warning" },
+        "2013": { description: "en dash", level: "warning", replacement: "-" },
         "200b": { description: "zero width space", level: "error", zeroWidth: true },
-        "00a0": { description: "non breaking space", level: "info" },
+        "00a0": { description: "non breaking space", level: "info", replacement: " " },
       },
     });
     mockGetConfiguration.mockReturnValue(mockConfig);
@@ -73,18 +79,21 @@ describe("getGremlinConfig", () => {
       description: "en dash",
       level: "warning",
       zeroWidth: undefined,
+      replacement: "-",
     });
     expect(result).toContainEqual({
       codePoint: "200b",
       description: "zero width space",
       level: "error",
       zeroWidth: true,
+      replacement: undefined,
     });
     expect(result).toContainEqual({
       codePoint: "00a0",
       description: "non breaking space",
       level: "info",
       zeroWidth: undefined,
+      replacement: " ",
     });
   });
 
@@ -99,6 +108,40 @@ describe("getGremlinConfig", () => {
     const result = getGremlinConfig();
 
     expect(result[0].zeroWidth).toBe(true);
+  });
+
+  it("preserves replacement when present", () => {
+    const mockConfig = createMockConfig({
+      "gremlins.characters": {
+        "2019": {
+          description: "right single quotation mark",
+          level: "warning",
+          replacement: "'",
+        },
+      },
+    });
+    mockGetConfiguration.mockReturnValue(mockConfig);
+
+    const result = getGremlinConfig();
+
+    expect(result[0].replacement).toBe("'");
+  });
+
+  it("preserves warning fallbacks for control-like characters", () => {
+    const mockConfig = createMockConfig({
+      "gremlins.characters": {
+        "000b": {
+          description: "line tabulation",
+          level: "warning",
+          replacement: " ",
+        },
+      },
+    });
+    mockGetConfiguration.mockReturnValue(mockConfig);
+
+    const result = getGremlinConfig();
+
+    expect(result[0].replacement).toBe(" ");
   });
 
   it("uses empty object as default when config key is missing", () => {

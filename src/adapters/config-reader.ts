@@ -11,7 +11,15 @@ export function isFeatureEnabled(feature: FeatureName): boolean {
 export function getGremlinConfig(): GremlinCharConfig[] {
   const config = vscode.workspace.getConfiguration("highlight-unwanted-spaces");
   const characters = config.get<
-    Record<string, { description: string; level: string; zeroWidth?: boolean }>
+    Record<
+      string,
+      {
+        description: string;
+        level: string;
+        zeroWidth?: boolean;
+        replacement?: string;
+      }
+    >
   >("gremlins.characters", {});
 
   return Object.entries(characters).map(([codePoint, value]) => ({
@@ -19,5 +27,6 @@ export function getGremlinConfig(): GremlinCharConfig[] {
     description: value.description,
     level: value.level as "error" | "warning" | "info",
     zeroWidth: value.zeroWidth,
+    replacement: value.replacement,
   }));
 }

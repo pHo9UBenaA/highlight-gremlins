@@ -4,6 +4,14 @@ import {
   GremlinDetectionResult,
 } from "./types";
 
+function shouldRemoveByDefault(config: GremlinCharConfig, codePoint: number): boolean {
+  return (
+    config.zeroWidth === true ||
+    codePoint < 0x20 ||
+    codePoint === 0x00ad
+  );
+}
+
 export function detectGremlins(
   text: string,
   config: GremlinCharConfig[]
@@ -46,14 +54,26 @@ export function removeGremlins(
   text: string,
   config: GremlinCharConfig[]
 ): string {
-  const codePoints = new Set(
-    config.map((c) => parseInt(c.codePoint, 16))
-  );
+  const configMap = new Map<number, GremlinCharConfig>();
+  for (const c of config) {
+    configMap.set(parseInt(c.codePoint, 16), c);
+  }
 
   let result = "";
   for (const ch of text) {
     const cp = ch.codePointAt(0)!;
-    if (!codePoints.has(cp)) {
+    const matchedConfig = configMap.get(cp);
+    if (!matchedConfig) {
+      result += ch;
+      continue;
+    }
+
+    if (matchedConfig.replacement !== undefined) {
+      result += matchedConfig.replacement;
+      continue;
+    }
+
+    if (!shouldRemoveByDefault(matchedConfig, cp)) {
       result += ch;
     }
   }

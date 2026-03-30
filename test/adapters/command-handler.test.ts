@@ -125,12 +125,36 @@ describe("fixAll command", () => {
   });
 
   it("fixes all issues in one pass: fullwidth spaces, trailing spaces, and gremlins", async () => {
-    const editor = createMockEditor("hello\u3000world  \nfoo\u2013bar  ");
+    const editor = createMockEditor("hello\u3000world  \nfoo\u2013bar  \n\u2018it\u2019s\u00A0fine\u201d  ");
     mockActiveTextEditor.value = editor;
 
     const mockConfig = createMockConfig({
       "gremlins.characters": {
-        "2013": { description: "en dash", level: "warning" },
+        "2013": {
+          description: "en dash",
+          level: "warning",
+          replacement: "-",
+        },
+        "2018": {
+          description: "left single quotation mark",
+          level: "warning",
+          replacement: "'",
+        },
+        "2019": {
+          description: "right single quotation mark",
+          level: "warning",
+          replacement: "'",
+        },
+        "201d": {
+          description: "right double quotation mark",
+          level: "warning",
+          replacement: "\"",
+        },
+        "00a0": {
+          description: "non breaking space",
+          level: "info",
+          replacement: " ",
+        },
       },
     });
     mockGetConfiguration.mockReturnValue(mockConfig);
@@ -145,7 +169,7 @@ describe("fixAll command", () => {
     expect(editor.edit).toHaveBeenCalled();
     expect(editor._editBuilder.replace).toHaveBeenCalledWith(
       expect.any(MockRange),
-      "hello world\nfoobar"
+      "hello world\nfoo-bar\n'it's fine\""
     );
   });
 
@@ -240,13 +264,47 @@ describe("removeGremlins command", () => {
     mockActiveTextEditor.value = undefined;
   });
 
-  it("removes gremlin characters from the active editor using config", async () => {
-    const editor = createMockEditor("hello\u2013world");
+  it("only removes control-like gremlins and applies configured replacements", async () => {
+    const editor = createMockEditor("foo\u2013bar\u200B \u201cit\u2019s\u000Bfine\u201d");
     mockActiveTextEditor.value = editor;
 
     const mockConfig = createMockConfig({
       "gremlins.characters": {
-        "2013": { description: "en dash", level: "warning" },
+        "2013": {
+          description: "en dash",
+          level: "warning",
+          replacement: "-",
+        },
+        "200b": {
+          description: "zero width space",
+          level: "error",
+          zeroWidth: true,
+        },
+        "201c": {
+          description: "left double quotation mark",
+          level: "warning",
+          replacement: "\"",
+        },
+        "2019": {
+          description: "right single quotation mark",
+          level: "warning",
+          replacement: "'",
+        },
+        "000b": {
+          description: "line tabulation",
+          level: "warning",
+          replacement: " ",
+        },
+        "201d": {
+          description: "right double quotation mark",
+          level: "warning",
+          replacement: "\"",
+        },
+        "00a0": {
+          description: "non breaking space",
+          level: "info",
+          replacement: " ",
+        },
       },
     });
     mockGetConfiguration.mockReturnValue(mockConfig);
@@ -261,7 +319,7 @@ describe("removeGremlins command", () => {
     expect(editor.edit).toHaveBeenCalled();
     expect(editor._editBuilder.replace).toHaveBeenCalledWith(
       expect.any(MockRange),
-      "helloworld"
+      "foo-bar \"it's fine\""
     );
   });
 

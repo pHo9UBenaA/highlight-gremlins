@@ -15,6 +15,7 @@ export interface GremlinCharConfig {
   description: string;
   level: GremlinLevel;
   zeroWidth?: boolean;
+  replacement?: string;
 }
 
 export interface GremlinDetection {

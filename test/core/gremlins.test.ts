@@ -7,6 +7,7 @@ const enDashConfig: GremlinCharConfig = {
   codePoint: "2013",
   description: "en dash",
   level: "warning",
+  replacement: "-",
 };
 
 const zeroWidthSpaceConfig: GremlinCharConfig = {
@@ -20,6 +21,35 @@ const nonBreakingSpaceConfig: GremlinCharConfig = {
   codePoint: "00a0",
   description: "non breaking space",
   level: "info",
+  replacement: " ",
+};
+
+const rightSingleQuotationMarkConfig: GremlinCharConfig = {
+  codePoint: "2019",
+  description: "right single quotation mark",
+  level: "warning",
+  replacement: "'",
+};
+
+const leftSingleQuotationMarkConfig: GremlinCharConfig = {
+  codePoint: "2018",
+  description: "left single quotation mark",
+  level: "warning",
+  replacement: "'",
+};
+
+const leftDoubleQuotationMarkConfig: GremlinCharConfig = {
+  codePoint: "201c",
+  description: "left double quotation mark",
+  level: "warning",
+  replacement: "\"",
+};
+
+const rightDoubleQuotationMarkConfig: GremlinCharConfig = {
+  codePoint: "201d",
+  description: "right double quotation mark",
+  level: "warning",
+  replacement: "\"",
 };
 
 describe("detectGremlins", () => {
@@ -105,14 +135,56 @@ describe("detectGremlins", () => {
 });
 
 describe("removeGremlins", () => {
-  it("removes en dash from text", () => {
+  it("replaces warning punctuation gremlins with ascii equivalents", () => {
+    const result = removeGremlins("\u2018hello\u2013\u201cworld\u201d\u2019", [
+      leftSingleQuotationMarkConfig,
+      enDashConfig,
+      leftDoubleQuotationMarkConfig,
+      rightDoubleQuotationMarkConfig,
+      rightSingleQuotationMarkConfig,
+    ]);
+    expect(result).toBe("'hello-\"world\"'");
+  });
+
+  it("replaces en dash with ascii hyphen", () => {
     const result = removeGremlins("hello\u2013world", [enDashConfig]);
-    expect(result).toBe("helloworld");
+    expect(result).toBe("hello-world");
   });
 
   it("removes zero width space from text", () => {
     const result = removeGremlins("abc\u200Bdef", [zeroWidthSpaceConfig]);
     expect(result).toBe("abcdef");
+  });
+
+  it("replaces warning control-like gremlins with configured fallbacks", () => {
+    const result = removeGremlins("a\u0003b\u000Bc\u00ADd", [
+      {
+        codePoint: "0003",
+        description: "end of text",
+        level: "warning",
+        replacement: "",
+      },
+      {
+        codePoint: "000b",
+        description: "line tabulation",
+        level: "warning",
+        replacement: " ",
+      },
+      {
+        codePoint: "00ad",
+        description: "soft hyphen",
+        level: "info",
+      },
+    ]);
+    expect(result).toBe("ab cd");
+  });
+
+  it("replaces configured gremlins instead of removing them", () => {
+    const result = removeGremlins("it\u2019s\u00A0fine", [
+      rightSingleQuotationMarkConfig,
+      nonBreakingSpaceConfig,
+    ]);
+    expect(result).toBe("it's fine");
   });
 });
 
@@ -163,6 +235,10 @@ const allDefaultConfigs: GremlinCharConfig[] = [
   enDashConfig,
   zeroWidthSpaceConfig,
   nonBreakingSpaceConfig,
+  leftSingleQuotationMarkConfig,
+  rightSingleQuotationMarkConfig,
+  leftDoubleQuotationMarkConfig,
+  rightDoubleQuotationMarkConfig,
 ];
 
 const configSubset = fc.subarray(allDefaultConfigs, { minLength: 1 });
@@ -190,11 +266,18 @@ describe("PBT: removeGremlins", () => {
     fc.assert(
       fc.property(configAndString, ([configs, s]) => {
         const result = removeGremlins(s, configs);
-        const gremlinCodePoints = new Set(
-          configs.map((c) => parseInt(c.codePoint, 16))
+        const removedOrReplacedCodePoints = new Set(
+          configs
+            .filter((c) =>
+              c.replacement !== undefined ||
+              c.zeroWidth === true ||
+              parseInt(c.codePoint, 16) < 0x20 ||
+              parseInt(c.codePoint, 16) === 0x00ad
+            )
+            .map((c) => parseInt(c.codePoint, 16))
         );
         for (const ch of result) {
-          if (gremlinCodePoints.has(ch.codePointAt(0)!)) {
+          if (removedOrReplacedCodePoints.has(ch.codePointAt(0)!)) {
             return false;
           }
         }
