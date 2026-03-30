@@ -2,7 +2,7 @@
   "name": "highlight-unwanted-spaces",
   "displayName": "Highlight Unwanted Spaces",
   "description": "Highlight and remove full-width spaces, trailing spaces, and gremlin characters",
-  "version": "0.0.4",
+  "version": "0.0.6",
   "publisher": "ryohei-hashimoto",
   "repository": {
     "type": "git",
@@ -175,6 +175,8 @@
     "watch": "tsc -watch -p ./",
     "test": "vitest run",
     "test:watch": "vitest",
+    "sync:gremlin-defaults": "node ./scripts/sync-gremlin-defaults.mjs",
+    "prepackage": "node ./scripts/sync-gremlin-defaults.mjs",
     "package": "npx @vscode/vsce package --allow-missing-repository"
   },
   "devDependencies": {
